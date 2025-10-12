@@ -1,24 +1,56 @@
-use crate::git;
+use inquire::{Select, Text};
+use semver::Version;
+use std::fmt;
 
-pub fn run(tag: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let branch = git::get_current_branch()?;
-    println!(
-        "🚀 Creating and pushing tag '{}' on branch '{}'",
-        tag, branch
-    );
-    if branch != "main" {
-        return Err(Box::from("Not on 'main' branch"));
+#[derive(Debug, Clone, Copy)]
+pub enum BumpType {
+    Patch,
+    Minor,
+    Major,
+}
+
+impl fmt::Display for BumpType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BumpType::Patch => write!(f, "Patch"),
+            BumpType::Minor => write!(f, "Minor"),
+            BumpType::Major => write!(f, "Major"),
+        }
     }
+}
 
-    if !git::is_clean_working_tree()? {
-        return Err(Box::from("Working tree is not clean"));
+pub fn select_bump_type() -> Result<BumpType, inquire::InquireError> {
+    let options = vec![BumpType::Patch, BumpType::Minor, BumpType::Major];
+    let ans = Select::new("Select version bump:", options).prompt();
+    match ans {
+        Ok(bump) => Ok(bump),
+        Err(e) => Err(e),
     }
+}
 
-    if !git::is_fetch_and_check_clean()? {
-        return Err(Box::from("Local branch is behind remote"));
+pub fn bump_version(latest: &Version, bump: BumpType) -> Version {
+    let mut new = latest.clone();
+    match bump {
+        BumpType::Patch => new.patch += 1,
+        BumpType::Minor => {
+            new.minor += 1;
+            new.patch = 0;
+        }
+        BumpType::Major => {
+            new.major += 1;
+            new.minor = 0;
+            new.patch = 0;
+        }
     }
+    new
+}
 
-    git::create_tag(tag)?;
+pub fn check_create_tag(new: &str, branch: &str) -> bool {
+    let msg = format!("Create tag '{}' on branch '{}'? (y/N):", new, branch);
+    let ans = Text::new(&msg).prompt();
 
-    Ok(())
+    match ans {
+        Ok(input) => input.to_lowercase() == "y",
+        Err(_) => false,
+    }
 }

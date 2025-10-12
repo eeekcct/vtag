@@ -1,4 +1,5 @@
 use git2::{Error, Repository};
+use semver::Version;
 
 pub fn get_current_branch() -> Result<String, Error> {
     // Open the repository in the current directory only (no recursive search)
@@ -69,5 +70,36 @@ pub fn create_tag(tag: &str) -> Result<(), Error> {
     }
     let obj = repo.head()?.peel(git2::ObjectType::Commit)?;
     repo.tag_lightweight(tag, &obj, false)?;
+    Ok(())
+}
+
+pub fn get_latest_version_tag() -> Result<Version, Error> {
+    let repo = Repository::open(".")?;
+    let tags = repo.tag_names(None)?;
+    let mut versions: Vec<Version> = vec![];
+    for tag_name in tags.iter().flatten() {
+        if let Ok(ver) = Version::parse(tag_name) {
+            versions.push(ver);
+        }
+    }
+    versions.sort();
+    versions.reverse();
+    if let Some(latest) = versions.first() {
+        Ok(latest.clone())
+    } else {
+        Err(Error::from_str("No valid semver tags found"))
+    }
+}
+
+pub fn push_tags(tag: &str) -> Result<(), Error> {
+    let status = std::process::Command::new("git")
+        .args(["push", "origin", tag])
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .expect("failed to execute git push tag");
+    if !status.success() {
+        return Err(Error::from_str("git push tag failed"));
+    }
     Ok(())
 }
