@@ -12,7 +12,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
     if let Err(e) = tag::run(&args.tag) {
-        eprintln!("error: {}", e);
+        eprintln!("❌ {}", e);
         std::process::exit(1);
     }
 }
