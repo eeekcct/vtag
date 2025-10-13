@@ -16,16 +16,19 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 pub fn cmd(tag: &Option<String>) -> Result<(), Box<dyn std::error::Error>> {
-    let branch = git::get_current_branch()?;
+    // Open the git repository
+    let repo = git::GitRepo::open()?;
+
+    let branch = repo.get_current_branch()?;
     if branch != "main" {
         return Err(Box::from("Not on 'main' branch"));
     }
 
-    if !git::is_clean_working_tree()? {
+    if !repo.is_clean_working_tree()? {
         return Err(Box::from("Working tree is not clean"));
     }
 
-    if !git::is_fetch_and_check_clean()? {
+    if !repo.is_fetch_and_check_clean()? {
         return Err(Box::from("Local branch is behind remote"));
     }
 
@@ -33,8 +36,9 @@ pub fn cmd(tag: &Option<String>) -> Result<(), Box<dyn std::error::Error>> {
         tag.to_string()
     } else {
         let bump = tag::select_bump_type()?;
-        let latest =
-            git::get_latest_version_tag().unwrap_or_else(|_| semver::Version::new(0, 0, 0));
+        let latest = repo
+            .get_latest_version_tag()
+            .unwrap_or_else(|_| semver::Version::new(0, 0, 0));
         let new_version = tag::bump_version(&latest, bump);
         tag::format_vtag(&new_version.to_string())
     };
@@ -48,7 +52,7 @@ pub fn cmd(tag: &Option<String>) -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    git::create_tag(&new_tag)?;
+    repo.create_tag(&new_tag)?;
     git::push_tags(&new_tag)?;
     println!("🚀 Creating and pushing tag '{}'", new_tag);
 
