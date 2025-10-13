@@ -23,15 +23,7 @@ pub fn is_fetch_and_check_clean() -> Result<bool, Error> {
     let branch = head.shorthand().unwrap();
 
     // use git command to fetch
-    let status = std::process::Command::new("git")
-        .args(["fetch", "origin", branch])
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .status()
-        .expect("failed to execute git fetch");
-    if !status.success() {
-        return Err(Error::from_str("git fetch failed"));
-    }
+    fetch()?;
 
     // Below is an alternative way using git2 crate, but it requires setting up SSH credentials.
     // let mut cb = RemoteCallbacks::new();
@@ -76,6 +68,7 @@ pub fn create_tag(tag: &str) -> Result<(), Error> {
 pub fn get_latest_version_tag() -> Result<Version, Error> {
     let repo = Repository::open(".")?;
     let tags = repo.tag_names(None)?;
+
     let mut versions: Vec<Version> = vec![];
     for tag_name in tags.iter().flatten() {
         if let Ok(ver) = Version::parse(tag_name) {
@@ -89,6 +82,19 @@ pub fn get_latest_version_tag() -> Result<Version, Error> {
     } else {
         Err(Error::from_str("No valid semver tags found"))
     }
+}
+
+fn fetch() -> Result<(), Error> {
+    let status = std::process::Command::new("git")
+        .args(["fetch", "origin"])
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .expect("failed to execute git fetch");
+    if !status.success() {
+        return Err(Error::from_str("git fetch failed"));
+    }
+    Ok(())
 }
 
 pub fn push_tags(tag: &str) -> Result<(), Error> {

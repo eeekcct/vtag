@@ -1,7 +1,21 @@
 use crate::git;
 use crate::tag;
+use clap::Parser;
 
-pub fn run(tag: &Option<String>) -> Result<(), Box<dyn std::error::Error>> {
+#[derive(Parser)]
+#[command(author, version, about = "Create and push git tags", long_about = None)]
+struct Args {
+    /// Tag name
+    tag: Option<String>,
+}
+
+pub fn run() -> Result<(), Box<dyn std::error::Error>> {
+    let args = Args::parse();
+
+    cmd(&args.tag)
+}
+
+pub fn cmd(tag: &Option<String>) -> Result<(), Box<dyn std::error::Error>> {
     let branch = git::get_current_branch()?;
     if branch != "main" {
         return Err(Box::from("Not on 'main' branch"));
@@ -22,8 +36,12 @@ pub fn run(tag: &Option<String>) -> Result<(), Box<dyn std::error::Error>> {
         let latest =
             git::get_latest_version_tag().unwrap_or_else(|_| semver::Version::new(0, 0, 0));
         let new_version = tag::bump_version(&latest, bump);
-        new_version.to_string()
+        tag::format_vtag(&new_version.to_string())
     };
+
+    if !tag::is_valid_tag(&new_tag) {
+        return Err(Box::from(format!("Invalid tag name '{}'", new_tag)));
+    }
 
     if !tag::check_create_tag(&new_tag, &branch) {
         println!("🚫 Tag creation cancelled");

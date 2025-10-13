@@ -54,3 +54,19 @@ pub fn check_create_tag(new: &str, branch: &str) -> bool {
         Err(_) => false,
     }
 }
+
+pub fn format_vtag(tag: &str) -> String {
+    if tag.starts_with('v') {
+        tag.to_string()
+    } else {
+        format!("v{}", tag)
+    }
+}
+
+pub fn is_valid_tag(tag: &str) -> bool {
+    let trimmed = tag.strip_prefix('v');
+    match trimmed {
+        Some(rest) => Version::parse(rest).is_ok(),
+        None => false,
+    }
+}
