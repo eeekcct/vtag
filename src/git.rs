@@ -1,4 +1,4 @@
-use git2::{Error, Repository};
+use git2::{Error, ObjectType, Repository, StatusOptions};
 use semver::Version;
 
 pub fn get_current_branch() -> Result<String, Error> {
@@ -13,7 +13,9 @@ pub fn get_current_branch() -> Result<String, Error> {
 
 pub fn is_clean_working_tree() -> Result<bool, Error> {
     let repo = Repository::open(".")?;
-    let statuses = repo.statuses(None)?;
+    let mut opts = StatusOptions::new();
+    opts.include_ignored(false).include_untracked(false);
+    let statuses = repo.statuses(Some(&mut opts))?;
     Ok(statuses.is_empty())
 }
 
@@ -60,7 +62,7 @@ pub fn create_tag(tag: &str) -> Result<(), Error> {
             tag, target
         )));
     }
-    let obj = repo.head()?.peel(git2::ObjectType::Commit)?;
+    let obj = repo.head()?.peel(ObjectType::Commit)?;
     repo.tag_lightweight(tag, &obj, false)?;
     Ok(())
 }
