@@ -15,11 +15,14 @@ before:
     - rustup default stable
     - cargo install --locked cargo-zigbuild
     - cargo fetch --locked
+    - curl -L https://github.com/roblabla/MacOSX-SDKs/releases/download/13.3/MacOSX13.3.sdk.tar.xz | tar xJ
 
 builds:
   - builder: rust
     env:
       - VERSION={{.Version}}
+      - SDKROOT=$(pwd)/MacOSX13.3.sdk/
+      - PATH=$PATH:~/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/x86_64-unknown-linux-gnu/bin/
       - CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER=rust-lld
     flags:
       - --release
