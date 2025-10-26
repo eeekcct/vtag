@@ -21,11 +21,7 @@ impl fmt::Display for BumpType {
 
 pub fn select_bump_type() -> Result<BumpType, inquire::InquireError> {
     let options = vec![BumpType::Patch, BumpType::Minor, BumpType::Major];
-    let ans = Select::new("Select version bump:", options).prompt();
-    match ans {
-        Ok(bump) => Ok(bump),
-        Err(e) => Err(e),
-    }
+    Select::new("Select version bump:", options).prompt()
 }
 
 pub fn bump_version(latest: &Version, bump: BumpType) -> Version {
