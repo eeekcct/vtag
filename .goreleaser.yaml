@@ -18,6 +18,9 @@ before:
 
 builds:
   - builder: rust
+    env:
+      - VERSION={{.Version}}
+      - CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER=rust-lld
     flags:
       - --release
     targets:
