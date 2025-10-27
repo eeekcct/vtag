@@ -18,11 +18,12 @@ jobs:
           cargo install --locked cargo-zigbuild
           cargo fetch --locked
 
-      # - name: Install Mingw-w64
-      #   run: |
-      #     sudo apt-get install -y mingw-w64
+      - name: Install Mingw-w64
+        run: |
+          sudo apt-get install -y mingw-w64
+          export LIBRARY_PATH="/usr/x86_64-w64-mingw32/lib:$LIBRARY_PATH"
 
       - name: Build with cargo-zigbuild for windows x86_64
         run: |
-          rustup target add x86_64-pc-windows-msvc
-          cargo zigbuild --release --target x86_64-pc-windows-msvc --verbose
+          rustup target add x86_64-pc-windows-gnu
+          cargo zigbuild --release --target x86_64-pc-windows-gnu --verbose
