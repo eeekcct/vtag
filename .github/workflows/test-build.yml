@@ -1,0 +1,24 @@
+name: Test Build
+
+on:
+  push:
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: mlugg/setup-zig@8d6198c65fb0feaa111df26e6b467fea8345e46f # v2.0.5
+
+      - name: Set up
+        uses: |
+          rustup default stable
+          cargo install --locked cargo-zigbuild
+          cargo fetch --locked
+
+      - name: Build with cargo-zigbuild for windows x86_64
+        run: |
+          rustup target add x86_64-pc-windows-gnu
+          cargo zigbuild --release --target x86_64-pc-windows-gnu --verbose
