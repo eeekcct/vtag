@@ -5,7 +5,7 @@ on:
 
 jobs:
   test-build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -17,6 +17,11 @@ jobs:
           rustup default stable
           cargo install --locked cargo-zigbuild
           cargo fetch --locked
+
+      - name: Install Mingw-w64
+        run: |
+          sudo apt-get install -y mingw-w64
+          export CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc CC_x86_64_pc_windows_gnu=x86_64-w64-mingw32-gcc-posix CXX_x86_64_pc_windows_gnu=x86_64-w64-mingw32-g++-posix
 
       - name: Build with cargo-zigbuild for windows x86_64
         run: |
