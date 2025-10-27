@@ -13,7 +13,7 @@ jobs:
       - uses: mlugg/setup-zig@8d6198c65fb0feaa111df26e6b467fea8345e46f # v2.0.5
 
       - name: Set up
-        uses: |
+        run: |
           rustup default stable
           cargo install --locked cargo-zigbuild
           cargo fetch --locked
