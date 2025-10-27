@@ -19,7 +19,9 @@ jobs:
           cargo fetch --locked
 
       - name: Install Mingw-w64
-        run: sudo apt-get install -y mingw-w64
+        run: |
+          sudo apt-get install -y mingw-w64
+          export LIBRARY_PATH="/usr/x86_64-w64-mingw32/lib:$LIBRARY_PATH"
 
       - name: Build with cargo-zigbuild for windows x86_64
         run: |
