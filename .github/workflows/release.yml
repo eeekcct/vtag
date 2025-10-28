@@ -31,7 +31,7 @@ jobs:
       #     password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Mingw-w64
-        run: brew install -y mingw-w64
+        run: brew install mingw-w64
 
       - uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6.4.0
         with:
