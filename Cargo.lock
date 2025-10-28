@@ -770,7 +770,6 @@ dependencies = [
  "clap",
  "git2",
  "inquire",
- "libgit2-sys",
  "semver",
 ]
 
