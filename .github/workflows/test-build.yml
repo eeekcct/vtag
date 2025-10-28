@@ -30,3 +30,15 @@ jobs:
         run: |
           rustup target add x86_64-pc-windows-gnu
           cargo zigbuild --release --target x86_64-pc-windows-gnu --verbose
+      - name: Build with cargo-zigbuild for macOS x86_64
+        env:
+          CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER: rust-lld
+        run: |
+          rustup target add x86_64-apple-darwin
+          cargo zigbuild --release --target x86_64-apple-darwin --verbose
+      - name: Build with cargo-zigbuild for macOS aarch64
+        env:
+          CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER: rust-lld
+        run: |
+          rustup target add aarch64-apple-darwin
+          cargo zigbuild --release --target aarch64-apple-darwin --verbose
