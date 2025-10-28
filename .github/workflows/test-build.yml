@@ -24,7 +24,6 @@ jobs:
       #     export e
       - name: Build with cargo-zigbuild for windows x86_64
         env:
-          CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER: x86_64-w64-mingw32-gcc
           CC_x86_64_pc_windows_gnu: x86_64-w64-mingw32-gcc-posix
           CXX_x86_64_pc_windows_gnu: x86_64-w64-mingw32-g++-posix
         run: |
