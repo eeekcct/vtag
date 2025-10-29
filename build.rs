@@ -10,10 +10,10 @@ fn main() {
     let date = std::env::var("DATE").unwrap_or_else(|_| "unknown".to_string());
     println!("cargo:rustc-env=DATE={}", date);
 
-    let os = std::env::var("OS").unwrap_or_else(|_| "unknown".to_string());
+    let os = std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_else(|_| "unknown".to_string());
     println!("cargo:rustc-env=OS={}", os);
 
-    let arch = std::env::var("ARCH").unwrap_or_else(|_| "unknown".to_string());
+    let arch = std::env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_else(|_| "unknown".to_string());
     println!("cargo:rustc-env=ARCH={}", arch);
 
     let rustc_version = Command::new("rustc")

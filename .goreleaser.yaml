@@ -27,8 +27,6 @@ builds:
       - VERSION={{ .Version }}
       - COMMIT={{ .FullCommit }}
       - DATE={{ .Date }}
-      - OS={{ .Runtime.GOOS }}
-      - ARCH={{ .Runtime.Goarch }}
     flags:
       - --release
     targets:
