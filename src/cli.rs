@@ -10,7 +10,7 @@ use clap::Parser;
   long_version = concat!(
     "version ", env!("VERSION"), "\n",
     "  commit: ", env!("COMMIT"), "\n",
-    "  build at: ", env!("DATE"), "\n",
+    "  built at: ", env!("DATE"), "\n",
     "  rust version: ", env!("RUSTC_VERSION"), "\n",
     "  platform: ", env!("OS"), "/", env!("ARCH")
   ),
