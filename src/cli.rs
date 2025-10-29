@@ -3,7 +3,18 @@ use crate::tag;
 use clap::Parser;
 
 #[derive(Parser)]
-#[command(author, version, about = "Create and push git tags", long_about = None)]
+#[command(
+  version = env!("VERSION"),
+  about = "Create and push git tags",
+  long_about = None,
+  long_version = concat!(
+    "version ", env!("VERSION"), "\n",
+    "  commit: ", env!("COMMIT"), "\n",
+    "  build at: ", env!("DATE"), "\n",
+    "  rust version: ", env!("RUSTC_VERSION"), "\n",
+    "  platform: ", env!("OS"), "/", env!("ARCH")
+  ),
+)]
 struct Args {
     /// Tag name
     tag: Option<String>,
