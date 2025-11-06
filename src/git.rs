@@ -1,4 +1,4 @@
-use git2::{Error, ObjectType, Repository, StatusOptions};
+use git2::{Error, Repository, StatusOptions};
 use semver::Version;
 
 pub struct GitRepo {
@@ -69,8 +69,20 @@ impl GitRepo {
                 tag, target
             )));
         }
-        let obj = self.repo.head()?.peel(ObjectType::Commit)?;
-        self.repo.tag_lightweight(tag, &obj, false)?;
+
+        // Create a signed tag using git command
+        // git2 Repository does not directly support creating signed tags
+        // let obj = self.repo.head()?.peel(ObjectType::Commit)?;
+        // self.repo.tag_lightweight(tag, &obj, false)?;
+        let status = std::process::Command::new("git")
+            .args(["tag", "-s", tag, "-m", tag])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status()
+            .expect("failed to execute git tag");
+        if !status.success() {
+            return Err(Error::from_str("git tag command failed"));
+        }
         Ok(())
     }
 
