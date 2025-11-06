@@ -57,7 +57,25 @@ changelog:
       - "^docs:"
       - "^test:"
 
+sboms:
+  - id: archive
+    artifacts: archive
+  - id: source
+    artifacts: source
+
+signs:
+  - cmd: cosign
+    signature: "${artifact}.sigstore.json"
+    args:
+      - "sign-blob"
+      - "--yes"
+      - "--bundle=${signature}"
+      - "${artifact}"
+    artifacts: checksum
+    output: true
+
 release:
+  draft: true
   footer: >-
 
     ---
