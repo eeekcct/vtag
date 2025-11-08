@@ -36,4 +36,4 @@ vtag --release
 
 ## License
 
-MIT
+[MIT](./LICENSE)
