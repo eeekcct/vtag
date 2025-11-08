@@ -69,7 +69,7 @@ pub fn cmd(tag: &Option<String>, release: bool) -> Result<(), Box<dyn std::error
 
     repo.create_tag(&new_tag)?;
     git::push_tags(&new_tag)?;
-    println!("🚀 Creating and pushing tag '{}'", new_tag);
+    println!("🚀 Created and pushed tag '{}'", new_tag);
 
     if !release {
         return Ok(());
@@ -80,8 +80,7 @@ pub fn cmd(tag: &Option<String>, release: bool) -> Result<(), Box<dyn std::error
     // Run async function in tokio runtime
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
-        .build()
-        .unwrap();
+        .build()?;
 
     runtime.block_on(async {
         let api = git::GitApi::new(owner, repo_name)?;
@@ -89,7 +88,7 @@ pub fn cmd(tag: &Option<String>, release: bool) -> Result<(), Box<dyn std::error
         Ok::<(), Box<dyn std::error::Error>>(())
     })?;
 
-    println!("🏷️ Creating release for tag '{}'", new_tag);
+    println!("🏷️ Created release for tag '{}'", new_tag);
 
     Ok(())
 }

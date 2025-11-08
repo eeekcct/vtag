@@ -178,29 +178,32 @@ fn parse_github_url(url: &str) -> Result<(String, String), Error> {
     Ok((owner, repo))
 }
 
-impl GitApi {
-    pub fn new(owner: String, repo: String) -> Result<Self, octocrab::Error> {
-        let mut token = String::new();
+fn get_token() -> String {
+    // Try to get token from environment variables
+    if let Ok(env_token) = std::env::var("GITHUB_TOKEN") {
+        return env_token;
+    } else if let Ok(env_token) = std::env::var("GH_TOKEN") {
+        return env_token;
+    }
 
-        // Try to get token from environment variables
-        if let Ok(env_token) = std::env::var("GITHUB_TOKEN") {
-            token = env_token;
-        } else if let Ok(env_token) = std::env::var("GH_TOKEN") {
-            token = env_token;
-        }
-
-        // Try to get token from gh cli
-        let output = std::process::Command::new("gh")
-            .args(["auth", "token"])
-            .output()
-            .ok();
-        if let Some(output) = output {
-            if output.status.success() {
-                if let Ok(gh_token) = String::from_utf8(output.stdout) {
-                    token = gh_token.trim().to_string();
-                }
+    // Try to get token from gh cli
+    let output = std::process::Command::new("gh")
+        .args(["auth", "token"])
+        .output()
+        .ok();
+    if let Some(output) = output {
+        if output.status.success() {
+            if let Ok(gh_token) = String::from_utf8(output.stdout) {
+                return gh_token.trim().to_string();
             }
         }
+    }
+    String::new() // Return empty string if no token found
+}
+
+impl GitApi {
+    pub fn new(owner: String, repo: String) -> Result<Self, octocrab::Error> {
+        let token = get_token();
 
         let octocrab = Octocrab::builder().personal_token(token).build()?;
 
