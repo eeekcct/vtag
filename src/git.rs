@@ -211,7 +211,16 @@ impl GitApi {
     #[tokio::main]
     pub async fn publish_release(&self, tag: &str) -> Result<(), octocrab::Error> {
         let repo = self.octocrab.repos(self.owner.clone(), self.repo.clone());
-        repo.releases().generate_release_notes(tag).send().await?;
+        
+        // Generate release notes
+        let notes = repo.releases().generate_release_notes(tag).send().await?;
+        
+        // Create the release with the generated notes
+        repo.releases()
+            .create(tag)
+            .body(&notes.body)
+            .send()
+            .await?;
 
         Ok(())
     }
