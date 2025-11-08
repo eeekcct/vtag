@@ -1,8 +1,15 @@
 use git2::{Error, Repository, StatusOptions};
+use octocrab::Octocrab;
 use semver::Version;
 
 pub struct GitRepo {
     repo: Repository,
+}
+
+pub struct GitApi {
+    owner: String,
+    repo: String,
+    octocrab: Octocrab,
 }
 
 impl GitRepo {
@@ -103,6 +110,15 @@ impl GitRepo {
             Err(Error::from_str("No valid semver tags found"))
         }
     }
+
+    pub fn get_repo_owner_name(&self) -> Result<(String, String), Error> {
+        let remote = self.repo.find_remote("origin")?;
+        let url = remote
+            .url()
+            .ok_or(Error::from_str("Remote URL not found"))?;
+        let (owner, repo) = parse_github_url(&url)?;
+        Ok((owner, repo))
+    }
 }
 
 fn fetch() -> Result<(), Error> {
@@ -129,4 +145,106 @@ pub fn push_tags(tag: &str) -> Result<(), Error> {
         return Err(Error::from_str("git push tag failed"));
     }
     Ok(())
+}
+
+fn parse_github_url(url: &str) -> Result<(String, String), Error> {
+    // https://github.com/owner/repo.git
+    // git@github.com:owner/repo.git
+    let re = regex::Regex::new(
+        r"(?x)
+        (?:https://github\.com/|git@github\.com:)
+        (?P<owner>[^/]+)/
+        (?P<repo>[^/.]+)(?:\.git)?$",
+    )
+    .map_err(|e| Error::from_str(&format!("Regex error: {}", e)))?;
+
+    let caps = re
+        .captures(url)
+        .ok_or_else(|| Error::from_str("Invalid GitHub URL"))?;
+    let owner = caps
+        .name("owner")
+        .ok_or_else(|| Error::from_str("Owner not found"))?
+        .as_str()
+        .to_string();
+    let repo = caps
+        .name("repo")
+        .ok_or_else(|| Error::from_str("Repo not found"))?
+        .as_str()
+        .to_string();
+    Ok((owner, repo))
+}
+
+impl GitApi {
+    pub fn new(owner: String, repo: String) -> Result<Self, octocrab::Error> {
+        let mut token = String::new();
+
+        // Try to get token from environment variables
+        if let Ok(env_token) = std::env::var("GITHUB_TOKEN") {
+            token = env_token;
+        } else if let Ok(env_token) = std::env::var("GH_TOKEN") {
+            token = env_token;
+        }
+
+        // Try to get token from gh cli
+        let output = std::process::Command::new("gh")
+            .args(["auth", "token"])
+            .stdout(std::process::Stdio::null())
+            .output()
+            .ok();
+        if let Some(output) = output {
+            if output.status.success() {
+                if let Ok(gh_token) = String::from_utf8(output.stdout) {
+                    token = gh_token.trim().to_string();
+                }
+            }
+        }
+
+        let octocrab = Octocrab::builder().personal_token(token.clone()).build()?;
+
+        Ok(Self {
+            owner,
+            repo,
+            octocrab,
+        })
+    }
+
+    #[tokio::main]
+    pub async fn publish_release(&self, tag: &str) -> Result<(), octocrab::Error> {
+        let repo = self.octocrab.repos(self.owner.clone(), self.repo.clone());
+        repo.releases().generate_release_notes(tag).send().await?;
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::vec;
+
+    use super::*;
+
+    #[test]
+    fn test_parse_github_url() {
+        let url = vec![
+            "https://github.com/owner/repo.git",
+            "git@github.com:owner/repo.git",
+        ];
+        for u in url {
+            let (owner, repo) = parse_github_url(u).unwrap();
+            assert_eq!(owner, "owner");
+            assert_eq!(repo, "repo");
+        }
+    }
+
+    #[test]
+    fn test_parse_github_url_invalid() {
+        let url = vec![
+            "https://gitlab.com/owner/repo.git",
+            "git@gitlab.com:owner/repo.git",
+        ];
+        for u in url {
+            let result = parse_github_url(u);
+            assert!(result.is_err());
+        }
+    }
 }

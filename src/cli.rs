@@ -18,15 +18,19 @@ use clap::Parser;
 struct Args {
     /// Tag name
     tag: Option<String>,
+
+    /// Publish release (default: false)
+    #[arg(short, long, default_value_t = false)]
+    release: bool,
 }
 
 pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    cmd(&args.tag)
+    cmd(&args.tag, args.release)
 }
 
-pub fn cmd(tag: &Option<String>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn cmd(tag: &Option<String>, release: bool) -> Result<(), Box<dyn std::error::Error>> {
     // Open the git repository
     let repo = git::GitRepo::open()?;
 
@@ -66,6 +70,15 @@ pub fn cmd(tag: &Option<String>) -> Result<(), Box<dyn std::error::Error>> {
     repo.create_tag(&new_tag)?;
     git::push_tags(&new_tag)?;
     println!("🚀 Creating and pushing tag '{}'", new_tag);
+
+    if !release {
+        return Ok(());
+    }
+
+    let (owner, repo) = repo.get_repo_owner_name()?;
+    let api = git::GitApi::new(owner, repo)?;
+    api.publish_release(&new_tag)?;
+    println!("🏷️ Creating release for tag '{}'", new_tag);
 
     Ok(())
 }
