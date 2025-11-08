@@ -1733,6 +1733,7 @@ dependencies = [
  "git2",
  "inquire",
  "octocrab",
+ "once_cell",
  "regex",
  "semver",
  "tokio",

@@ -1,6 +1,18 @@
 use git2::{Error, Repository, StatusOptions};
 use octocrab::Octocrab;
+use once_cell::sync::Lazy;
+use regex::Regex;
 use semver::Version;
+
+static GITHUB_URL_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(
+        r"(?x)
+        (?:https://github\.com/|git@github\.com:)
+        (?P<owner>[^/]+)/
+        (?P<repo>[^/.]+)(?:\.git)?$",
+    )
+    .expect("Failed to compile GitHub URL regex")
+});
 
 pub struct GitRepo {
     repo: Repository,
@@ -150,15 +162,7 @@ pub fn push_tags(tag: &str) -> Result<(), Error> {
 fn parse_github_url(url: &str) -> Result<(String, String), Error> {
     // https://github.com/owner/repo.git
     // git@github.com:owner/repo.git
-    let re = regex::Regex::new(
-        r"(?x)
-        (?:https://github\.com/|git@github\.com:)
-        (?P<owner>[^/]+)/
-        (?P<repo>[^/.]+)(?:\.git)?$",
-    )
-    .map_err(|e| Error::from_str(&format!("Regex error: {}", e)))?;
-
-    let caps = re
+    let caps = GITHUB_URL_REGEX
         .captures(url)
         .ok_or_else(|| Error::from_str("Invalid GitHub URL"))?;
     let owner = caps
@@ -188,7 +192,6 @@ impl GitApi {
         // Try to get token from gh cli
         let output = std::process::Command::new("gh")
             .args(["auth", "token"])
-            .stdout(std::process::Stdio::null())
             .output()
             .ok();
         if let Some(output) = output {
@@ -199,7 +202,7 @@ impl GitApi {
             }
         }
 
-        let octocrab = Octocrab::builder().personal_token(token.clone()).build()?;
+        let octocrab = Octocrab::builder().personal_token(token).build()?;
 
         Ok(Self {
             owner,
@@ -208,10 +211,20 @@ impl GitApi {
         })
     }
 
-    #[tokio::main]
     pub async fn publish_release(&self, tag: &str) -> Result<(), octocrab::Error> {
         let repo = self.octocrab.repos(self.owner.clone(), self.repo.clone());
-        repo.releases().generate_release_notes(tag).send().await?;
+
+        let notes = repo.releases().generate_release_notes(tag).send().await?;
+
+        // Create release with auto-generated release notes
+        repo.releases()
+            .create(tag)
+            .name(tag)
+            .body(&notes.body)
+            .draft(false)
+            .prerelease(false)
+            .send()
+            .await?;
 
         Ok(())
     }
@@ -219,8 +232,6 @@ impl GitApi {
 
 #[cfg(test)]
 mod tests {
-    use std::vec;
-
     use super::*;
 
     #[test]

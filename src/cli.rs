@@ -75,9 +75,20 @@ pub fn cmd(tag: &Option<String>, release: bool) -> Result<(), Box<dyn std::error
         return Ok(());
     }
 
-    let (owner, repo) = repo.get_repo_owner_name()?;
-    let api = git::GitApi::new(owner, repo)?;
-    api.publish_release(&new_tag)?;
+    let (owner, repo_name) = repo.get_repo_owner_name()?;
+
+    // Run async function in tokio runtime
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+
+    runtime.block_on(async {
+        let api = git::GitApi::new(owner, repo_name)?;
+        api.publish_release(&new_tag).await?;
+        Ok::<(), Box<dyn std::error::Error>>(())
+    })?;
+
     println!("🏷️ Creating release for tag '{}'", new_tag);
 
     Ok(())
