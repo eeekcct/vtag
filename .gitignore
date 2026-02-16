@@ -2,3 +2,4 @@
 dist/
 .intentionally-empty-file.o
 target/
+third_party_licenses
