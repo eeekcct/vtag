@@ -5,7 +5,7 @@ on:
       - "v*"
 jobs:
   release:
-    uses: eeekcct/goreleaser-rust-workflow/.github/workflows/release.yml@b299f1ca26515c9e0c29c5f1b54bd902684752af # v0.2.1
+    uses: eeekcct/goreleaser-rust-workflow/.github/workflows/release.yml@681b4077c1a393f506b87ce729e0d576fcee5aef # NASM source-build support
     with:
       third_party_licenses: true
       license_check: true
