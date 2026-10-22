@@ -19,9 +19,9 @@ before:
 builds:
   - builder: rust
     env:
-      # Allow AWS-LC's packaged x86_64 Windows assembly when NASM is unavailable.
-      # NASM is still preferred when installed; this has no effect on other targets.
-      - AWS_LC_SYS_PREBUILT_NASM=1
+      # Compile Windows assembly with NASM; do not use packaged object files.
+      # The release workflow installs NASM and missing prerequisites must fail.
+      - AWS_LC_SYS_PREBUILT_NASM=0
       - CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc
       - CC_x86_64_pc_windows_gnu=x86_64-w64-mingw32-gcc
       - CXX_x86_64_pc_windows_gnu=x86_64-w64-mingw32-g++

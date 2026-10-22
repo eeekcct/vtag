@@ -8,6 +8,7 @@ on:
       - "build.rs"
       - "src/**"
       - ".goreleaser.yaml"
+      - ".github/workflows/release.yml"
       - ".github/workflows/release-targets.yml"
   push:
     branches: [main]
@@ -17,6 +18,7 @@ on:
       - "build.rs"
       - "src/**"
       - ".goreleaser.yaml"
+      - ".github/workflows/release.yml"
       - ".github/workflows/release-targets.yml"
 
 permissions:
@@ -41,7 +43,7 @@ jobs:
     env:
       RUSTUP_TOOLCHAIN: "1.99.1"
       TARGET: ${{ matrix.target }}
-      AWS_LC_SYS_PREBUILT_NASM: "1"
+      AWS_LC_SYS_PREBUILT_NASM: "0"
       CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER: x86_64-w64-mingw32-gcc
       CC_x86_64_pc_windows_gnu: x86_64-w64-mingw32-gcc
       CXX_x86_64_pc_windows_gnu: x86_64-w64-mingw32-g++
@@ -63,24 +65,15 @@ jobs:
           version: "0.17.0"
           use-cache: false
 
-      - name: Install MinGW
+      - name: Install Windows cross-build tools
         if: matrix.target == 'x86_64-pc-windows-gnu'
         run: |
-          brew install mingw-w64
+          brew install mingw-w64 nasm
           x86_64-w64-mingw32-gcc --version
+          nasm -v
 
       - name: Install pinned Cargo cross-builder
         run: cargo install cargo-zigbuild --version 0.24.0 --locked
-
-      - name: Exercise Windows prebuilt assembly fallback
-        if: matrix.target == 'x86_64-pc-windows-gnu'
-        run: |
-          # Simulate an unavailable NASM without changing the runner's install.
-          # This verifies the same fallback enabled in .goreleaser.yaml.
-          mkdir -p "$RUNNER_TEMP/no-nasm"
-          printf '#!/bin/sh\nexit 1\n' > "$RUNNER_TEMP/no-nasm/nasm"
-          chmod +x "$RUNNER_TEMP/no-nasm/nasm"
-          echo "$RUNNER_TEMP/no-nasm" >> "$GITHUB_PATH"
 
       - name: Build release target without publishing
         run: |
